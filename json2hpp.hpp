@@ -8,6 +8,7 @@
 #include <string>
 #include <array>
 #include <stack>
+#include <list>
 
 namespace kaixo {
 
@@ -81,7 +82,7 @@ namespace kaixo {
          */
         json& operator[](std::string_view index) {
             if (is(Null)) _value = object{};
-            else if (!is(Object)) throw std::exception("Not an object.");
+            else if (!is(Object)) throw std::runtime_error("Not an object.");
             auto _it = as<object>().find(index);
             if (_it == as<object>().end()) return as<object>()[std::string{ index }];
             else return _it->second;
@@ -95,7 +96,7 @@ namespace kaixo {
          */
         json& operator[](std::size_t index) {
             if (is(Null)) _value = array{};
-            else if (!is(Array)) throw std::exception("Not an array.");
+            else if (!is(Array)) throw std::runtime_error("Not an array.");
             if (as<array>().size() <= index) as<array>().resize(index + 1);
             return as<array>()[index];
         }
@@ -107,7 +108,7 @@ namespace kaixo {
          */
         template<class Ty> json& emplace(const Ty& val) {
             if (is(Null)) _value = array{};
-            else if (!is(Array)) throw std::exception("Not an array.");
+            else if (!is(Array)) throw std::runtime_error("Not an array.");
             return std::get<array>(_value).emplace_back(val);
         }
 
@@ -190,12 +191,41 @@ namespace kaixo {
             }
 
             _json = val.substr(0, _size);
+
+#if __APPLE__
+            char *tmpstr = (char *)malloc(_json.size());
+            memcpy(tmpstr, _json.data(), _json.size());
+            tmpstr[_json.size()]=0;
+
+            if (_floating)
+            {
+                double val=0.0;
+                sscanf(tmpstr, "%lf", &val);
+                return json{ val };
+            }
+            else
+            {
+                if (_signed)
+                {
+                    long long val=0;
+                    sscanf(tmpstr, "%lld", &val);
+                    return json{ val };
+                }
+                else
+                {
+                    unsigned long long val=0;
+                    sscanf(tmpstr, "%llu", &val);
+                    return json{ val };
+                }
+            }
+#else
             auto _parse = [&]<class Ty>(Ty val) {
                 std::from_chars(_json.data(), _json.data() + _json.size(), val);
                 return json{ val };
             };
             val = val.substr(_size);
             return _floating ? _parse(0.0) : _signed ? _parse(0ll) : _parse(0ull);
+#endif
         }
 
         static std::optional<json> parseJsonString(std::string_view& val) {
