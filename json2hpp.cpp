@@ -3,7 +3,11 @@
 #include "json2hpp.hpp"
 
 int main(int argc, char* argv[]) {
-    if (argc != 4) return -1;
+    if (argc != 4)
+    {
+        printf("Usage: json2cpp <name> <input.json> <output.hpp>");
+        return -1;
+    }
 
     std::string name = argv[1];
     std::filesystem::path input = argv[2];
