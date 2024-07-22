@@ -197,10 +197,13 @@ namespace kaixo {
             memcpy(tmpstr, _json.data(), _json.size());
             tmpstr[_json.size()]=0;
 
+            val = val.substr(_size);
+            
             if (_floating)
             {
                 double val=0.0;
                 sscanf(tmpstr, "%lf", &val);
+                free(tmpstr);
                 return json{ val };
             }
             else
@@ -209,12 +212,14 @@ namespace kaixo {
                 {
                     long long val=0;
                     sscanf(tmpstr, "%lld", &val);
+                    free(tmpstr);
                     return json{ val };
                 }
                 else
                 {
                     unsigned long long val=0;
                     sscanf(tmpstr, "%llu", &val);
+                    free(tmpstr);
                     return json{ val };
                 }
             }
